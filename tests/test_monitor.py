@@ -2,6 +2,7 @@ import unittest
 from src.market import Candle, INTERVAL_MS, parse_klines
 from src.strategy import ema, rsi, atr, find_signal
 from src.notifier import test_message, send_discord
+from unittest.mock import patch, MagicMock
 
 START=1700000100000
 
@@ -40,6 +41,15 @@ class MonitorTests(unittest.TestCase):
     def test_discord_rejects_invalid_webhook(self):
         with self.assertRaises(RuntimeError):
             send_discord("http://localhost:1234/foo", "message")
+    def test_discord_user_agent(self):
+        fake = MagicMock()
+        fake.status = 204
+        fake.__enter__.return_value = fake
+        with patch("src.notifier.urlopen", return_value=fake) as opener:
+            send_discord("https://discord.com/api/webhooks/123456/placeholder", "Hello")
+        request = opener.call_args.args[0]
+        self.assertTrue(request.get_header("User-agent").startswith("DiscordBot ("))
+        self.assertEqual(request.get_header("Content-type"), "application/json")
 
 if __name__=="__main__":
     unittest.main()
