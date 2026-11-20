@@ -33,8 +33,7 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Run monitor
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MODE: ${{ github.event.inputs.mode || 'scan' }}
         run: python -m src.main --mode "$MODE"
       - name: Save last sent signal
