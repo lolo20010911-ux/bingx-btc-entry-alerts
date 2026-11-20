@@ -1,0 +1,48 @@
+name: BingX 5m entry monitor
+on:
+  schedule:
+    - cron: '1-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'test / dry-run / scan'
+        required: true
+        default: test
+        type: choice
+        options:
+          - test
+          - dry-run
+          - scan
+permissions:
+  contents: write
+concurrency:
+  group: bingx-5m-monitor
+  cancel-in-progress: false
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Run monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MODE: ${{ github.event.inputs.mode || 'scan' }}
+        run: python -m src.main --mode "$MODE"
+      - name: Save last sent signal
+        if: success()
+        run: |
+          if git diff --quiet -- .state/last_signal.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .state/last_signal.json
+          git commit -m "chore: remember latest BTC alert [skip ci]"
+          git push origin "HEAD:${{ github.event.repository.default_branch }}"
