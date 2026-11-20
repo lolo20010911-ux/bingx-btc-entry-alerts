@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'test / dry-run / scan / backtest / status'
+        description: 'test / dry-run / scan / backtest / status / preview'
         required: true
         default: test
         type: choice
@@ -16,6 +16,7 @@ on:
           - scan
           - backtest
           - status
+          - preview
 permissions:
   contents: write
 concurrency:

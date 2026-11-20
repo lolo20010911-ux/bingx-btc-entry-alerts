@@ -8,7 +8,7 @@ from .market import INTERVAL_MS, HOUR_MS, fetch_klines, parse_klines
 from .strategy import find_signal
 from .filters import hourly_trend
 from .backtest import backtest
-from .notifier import send_discord, format_signal, format_status, test_message
+from .notifier import send_discord, format_signal, format_status, test_message, preview_message
 
 STATE = Path(".state/last_signal.json")
 
@@ -25,12 +25,16 @@ def candles_for(interval, limit, now):
 
 def main(argv=None):
     parser=argparse.ArgumentParser()
-    parser.add_argument("--mode",choices=("test","dry-run","scan","backtest","status"),default="scan")
+    parser.add_argument("--mode",choices=("test","dry-run","scan","backtest","status","preview"),default="scan")
     args=parser.parse_args(argv)
     webhook=os.environ.get("DISCORD_WEBHOOK_URL","")
     if args.mode == "test":
         send_discord(webhook,test_message())
         print("Discord test delivered")
+        return 0
+    if args.mode == "preview":
+        send_discord(webhook,preview_message())
+        print("Fictional SHORT alert preview delivered to Discord; no live market data, no trade")
         return 0
     if args.mode in ("scan","status") and not webhook:
         print("Discord webhook not configured; skipping alert/status.")

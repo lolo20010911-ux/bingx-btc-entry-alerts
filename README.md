@@ -50,3 +50,13 @@ Ha nem jön kereskedési jelzés, az **nem feltétlenül hiba**. A `dry-run` és
 - A `status` nem valódi belépő, nem nyit pozíciót. Az itt látott 5m záróár nem a pillanatnyi kötési ár.
 
 **Első backtest megfigyelés, 2026-11-17 – 2026-11-20:** 999 lezárt 5m gyertya, 8 mintabeli setup, 3 trend miatt szűrt, 5 szimulált ügylet, 1 pozitív, 20% találati arány, nettó -3,842R. Ez rövid, kis mintás és negatív eredmény: a stratégiát még nem szabad bizonyítottan nyereségesnek tekinteni, éles futures belépőket saját ellenőrzés nélkül nem ajánlott követni.
+
+## Demo belépőjelzés Discordra (V2.2)
+
+Ha meg szeretnéd nézni, milyen lesz egy valódi SHORT belépőjelzés:
+
+1. GitHub → **Actions → BingX 5m entry monitor → Run workflow**.
+2. A mode mezőben válaszd a **preview** opciót, majd indítsd el.
+3. A Discord `#btc-alerts` csatornában megjelenik egy **egyértelműen DEMO** SHORT üzenet, például belépő 60 000 USDT, stop 60 120, célár 59 760. Az árak **kitaláltak**, a 2025-01-01 dátum **minta**, nincs mögöttük valós piaci setup.
+
+A **preview** nem kér piaci adatot, nem módosítja az utolsó jelzés állapotát, és nem nyit pozíciót. Csak a Discord formátumot mutatja be. A **scan** mód külön működik, és továbbra is kizárólag teljesült indikátorfeltételek esetén jelez.

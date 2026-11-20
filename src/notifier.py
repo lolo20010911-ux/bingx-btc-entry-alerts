@@ -19,6 +19,34 @@ def format_signal(signal):
         "Signal only, NO ORDER. Check the live price and costs; this is not a guaranteed entry."
     )
 
+def preview_message():
+    """A clearly fictional SHORT alert to preview the real Discord layout.
+
+    Fixed demo values; never obtains market data, never generates a trading order.
+    """
+    from .strategy import Signal
+    example = Signal(
+        id="DEMO-ONLY",
+        side="SHORT",
+        candle_time=1735689600000,   # historical sample label: 2025-01-01 00:05 UTC
+        entry=60000.0,
+        stop=60120.0,
+        target=59760.0,
+        breakout_level=60060.0,
+        ema_fast=59940.0,
+        ema_slow=60100.0,
+        rsi=40.5,
+        atr=90.0,
+        volume_ratio=1.35,
+        risk_percent=0.20,
+    )
+    return (
+        "TEST / DEMO ONLY — FICTIONAL PRICES. DO NOT TRADE THIS.\\n"
+        + format_signal(example)
+        + "\\nConfirmed 1h EMA20/50 trend: SHORT (FICTIONAL)\\n"
+        + "TEST / DEMO ONLY — no real setup detected, no order placed."
+    )
+
 def format_status(last_closed_5m, hourly_direction, qualified, now_ms):
     """Human-readable heartbeat that does not imply a trade recommendation."""
     from .market import INTERVAL_MS
