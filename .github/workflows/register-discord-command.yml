@@ -1,0 +1,28 @@
+name: Register Discord settings command
+on:
+  workflow_dispatch:
+    inputs:
+      application_id:
+        description: Discord Application ID
+        required: true
+        type: string
+      guild_id:
+        description: Discord Server ID
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Register /btc-ertesites
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_APPLICATION_ID: ${{ inputs.application_id }}
+          DISCORD_GUILD_ID: ${{ inputs.guild_id }}
+        run: python discord-control/register_command.py

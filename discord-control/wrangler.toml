@@ -1,0 +1,8 @@
+name = "btc-discord-controls"
+main = "src/index.js"
+compatibility_date = "2026-11-20"
+[triggers]
+crons = ["*/5 * * * *"]
+[[kv_namespaces]]
+binding = "SETTINGS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
