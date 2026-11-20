@@ -25,3 +25,16 @@ python -m src.main --mode dry-run
 
 - BingX API: https://github.com/BingX-API/api-ai-skills/blob/main/skills/swap-market/api-reference.md
 - GitHub Actions schedule: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
+
+
+## V2 – 1h trendfilter és visszateszt
+
+A 5m LONG csak akkor jut el Discordra, ha az **utolsó teljesen lezárt 1 órás gyertyák** alapján az 1h EMA20 > EMA50, és az utolsó 1h záróár EMA20 felett van. SHORT esetén a fordítottja. Ha a trend semleges/hiányos, **nem küld jelzést**. Nem használ kialakuló 1h gyertyát.
+
+**Ellenőrzés:** GitHub → Actions → BingX 5m entry monitor → Run workflow → `dry-run`. A `scan` küld Discordra csak akkor, ha minden feltétel teljesül. `test` mód egyszerű tesztüzenetet küld.
+
+**Backtest:** ugyanitt válaszd a `backtest` módot. Nem küld Discordra. A futás naplójában látod a jelzések, szűrt jelzések, lezárt próbakötések, találati arány, nettó R és maximális R-visszaesés eredményét. A JSON-jelentés az Actions futás *Artifacts* szekciójából tölthető le, `btc-backtest-report` néven.
+
+**Visszateszt korlátai:** 1000 utolsó 5m gyertya ≈ 3,5 nap, nem reprezentatív teljesítményértékelés. A belépő a jelzés UTÁNI gyertya nyitóárán történik szimulálva; 0,05% taker díj/oldal, 0,02% becsült csúszás/fill, egyszerre legfeljebb egy pozíció, max 48 gyertya tartás. Ha egy gyertyán stop és célár egyaránt érintett, a stop számít. A funding, likvidáció és valós order book nem szerepel. A kimutatás R-alapú, **nem** számla- vagy tőkeáttételes P&L. A múltbeli eredmény nem garantál jövőbeli nyereséget.
+
+A bot soha nem nyit pozíciót. A GitHub Actions 5 perces ütemezése nem garantáltan pontos; futások késhetnek/kimaradhatnak.

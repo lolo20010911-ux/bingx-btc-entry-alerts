@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'test / dry-run / scan'
+        description: 'test / dry-run / scan / backtest'
         required: true
         default: test
         type: choice
@@ -13,6 +13,7 @@ on:
           - test
           - dry-run
           - scan
+          - backtest
 permissions:
   contents: write
 concurrency:
@@ -36,6 +37,14 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MODE: ${{ github.event.inputs.mode || 'scan' }}
         run: python -m src.main --mode "$MODE"
+      - name: Upload backtest report
+        if: ${{ success() && github.event.inputs.mode == 'backtest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-backtest-report
+          path: reports/latest_backtest.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Save last sent signal
         if: success()
         run: |

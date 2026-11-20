@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 INTERVAL_MS = 300000
+HOUR_MS = 3600000
 ENDPOINT = "https://open-api.bingx.com/openApi/swap/v3/quote/klines"
 
 @dataclass(frozen=True)
@@ -20,25 +21,25 @@ class Candle:
     volume: float
 
     @classmethod
-    def from_api(cls, item):
+    def from_api(cls, item, interval_ms=INTERVAL_MS):
         bar = cls(int(item["time"]), *(float(item[k]) for k in ("open", "high", "low", "close", "volume")))
-        if (bar.time <= 0 or bar.time % INTERVAL_MS or
+        if (bar.time <= 0 or bar.time % interval_ms or
             not all(math.isfinite(x) for x in (bar.open, bar.high, bar.low, bar.close, bar.volume)) or
             bar.low <= 0 or bar.high < max(bar.open, bar.close, bar.low) or
             bar.low > min(bar.open, bar.close) or bar.volume < 0):
             raise ValueError("Invalid candle")
         return bar
 
-def parse_klines(payload, now_ms, buffer_ms=10000):
+def parse_klines(payload, now_ms, buffer_ms=10000, interval_ms=INTERVAL_MS):
     if not isinstance(payload, dict) or str(payload.get("code")) != "0" or not isinstance(payload.get("data"), list):
         raise ValueError("Invalid BingX response")
-    bars = {b.time: b for b in (Candle.from_api(x) for x in payload["data"])}
-    return [b for _, b in sorted(bars.items()) if b.time + INTERVAL_MS + buffer_ms <= now_ms]
+    bars = {b.time: b for b in (Candle.from_api(x, interval_ms) for x in payload["data"])}
+    return [b for _, b in sorted(bars.items()) if b.time + interval_ms + buffer_ms <= now_ms]
 
-def fetch_klines(symbol="BTC-USDT", limit=300, attempts=3):
-    if symbol != "BTC-USDT" or not 100 <= limit <= 1000:
+def fetch_klines(symbol="BTC-USDT", limit=300, attempts=3, interval="5m"):
+    if symbol != "BTC-USDT" or not 100 <= limit <= 1000 or interval not in ("5m", "1h"):
         raise ValueError("Unsupported symbol or limit")
-    url = ENDPOINT + "?" + urlencode({"symbol": symbol, "interval": "5m", "limit": limit})
+    url = ENDPOINT + "?" + urlencode({"symbol": symbol, "interval": interval, "limit": limit})
     for index in range(attempts):
         try:
             with urlopen(Request(url, headers={"Accept": "application/json", "User-Agent": "bingx-entry-monitor/1"}), timeout=18) as res:

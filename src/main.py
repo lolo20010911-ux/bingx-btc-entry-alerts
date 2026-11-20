@@ -1,12 +1,13 @@
-"""Run the read-only monitor through Python module interface."""
+"""Live scanner and historical sample backtest. No order placements."""
 import argparse
 import json
 import os
-import sys
 import time
 from pathlib import Path
-from .market import fetch_klines, parse_klines
+from .market import INTERVAL_MS, HOUR_MS, fetch_klines, parse_klines
 from .strategy import find_signal
+from .filters import hourly_trend
+from .backtest import backtest
 from .notifier import send_discord, format_signal, test_message
 
 STATE = Path(".state/last_signal.json")
@@ -15,12 +16,16 @@ def read_state(path=STATE):
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"last_signal_id":None}
 
 def write_state(path, signal_id, close_time):
-    path.parent.mkdir(parents=True,exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"last_signal_id":signal_id,"last_signal_candle_close_utc":close_time},indent=2)+"\n",encoding="utf-8")
+
+def candles_for(interval, limit, now):
+    duration = HOUR_MS if interval == "1h" else INTERVAL_MS
+    return parse_klines(fetch_klines(interval=interval, limit=limit), now_ms=now, interval_ms=duration)
 
 def main(argv=None):
     parser=argparse.ArgumentParser()
-    parser.add_argument("--mode",choices=("test","dry-run","scan"),default="scan")
+    parser.add_argument("--mode",choices=("test","dry-run","scan","backtest"),default="scan")
     args=parser.parse_args(argv)
     webhook=os.environ.get("DISCORD_WEBHOOK_URL","")
     if args.mode == "test":
@@ -28,22 +33,36 @@ def main(argv=None):
         print("Discord test delivered")
         return 0
     if args.mode == "scan" and not webhook:
-        print("Discord webhook is not configured; skipping signal scan.")
+        print("Discord webhook not configured; skipping scan.")
         return 0
     now=int(time.time()*1000)
-    bars=parse_klines(fetch_klines(),now_ms=now)
-    print(f"Closed candles: {len(bars)}")
+    bars=candles_for("5m",1000 if args.mode == "backtest" else 300,now)
+    time.sleep(1.2)  # BingX Kline API: rate limit 1 req/sec per IP
+    hours=candles_for("1h",300,now)
+    print(f"Closed candles: 5m={len(bars)}, 1h={len(hours)}")
+    if args.mode == "backtest":
+        report=backtest(bars,hours)
+        Path("reports").mkdir(parents=True,exist_ok=True)
+        path=Path("reports/latest_backtest.json")
+        path.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+        print(json.dumps({k:v for k,v in report.items() if k!="trade_details"},indent=2))
+        print(f"Full report saved: {path}")
+        return 0
     signal=find_signal(bars,now_ms=now)
     if not signal:
-        print("No fresh setup")
+        print("No fresh 5m breakout/retest setup")
+        return 0
+    trend=hourly_trend(hours,signal.candle_time+INTERVAL_MS)
+    if trend != signal.side:
+        print(f"5m {signal.side} blocked by closed 1h trend ({trend or 'NEUTRAL/UNAVAILABLE'})")
         return 0
     if read_state().get("last_signal_id")==signal.id:
         print("Already notified")
         return 0
     if args.mode=="dry-run":
-        print("DRY RUN:\n"+format_signal(signal))
+        print("DRY RUN (not sent):\n"+format_signal(signal))
         return 0
-    send_discord(webhook,format_signal(signal))
+    send_discord(webhook,format_signal(signal)+"\nConfirmed 1h EMA20/50 trend: "+trend)
     write_state(STATE,signal.id,signal.candle_close_utc)
     print("Alert delivered")
     return 0
