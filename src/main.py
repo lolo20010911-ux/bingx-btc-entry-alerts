@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from .market import fetch_klines, parse_klines
 from .strategy import find_signal
-from .notifier import send_telegram, format_signal, test_message
+from .notifier import send_discord, format_signal, test_message
 
 STATE = Path(".state/last_signal.json")
 
@@ -22,15 +22,14 @@ def main(argv=None):
     parser=argparse.ArgumentParser()
     parser.add_argument("--mode",choices=("test","dry-run","scan"),default="scan")
     args=parser.parse_args(argv)
-    token=os.environ.get("TELEGRAM_BOT_TOKEN","")
-    chat=os.environ.get("TELEGRAM_CHAT_ID","")
+    webhook=os.environ.get("DISCORD_WEBHOOK_URL","")
     if args.mode == "test":
-        send_telegram(token,chat,test_message())
-        print("Telegram test delivered")
+        send_discord(webhook,test_message())
+        print("Discord test delivered")
         return 0
-    if args.mode == "scan" and (not token or not chat):
-        print("Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID",file=sys.stderr)
-        return 2
+    if args.mode == "scan" and not webhook:
+        print("Discord webhook is not configured; skipping signal scan.")
+        return 0
     now=int(time.time()*1000)
     bars=parse_klines(fetch_klines(),now_ms=now)
     print(f"Closed candles: {len(bars)}")
@@ -44,7 +43,7 @@ def main(argv=None):
     if args.mode=="dry-run":
         print("DRY RUN:\n"+format_signal(signal))
         return 0
-    send_telegram(token,chat,format_signal(signal))
+    send_discord(webhook,format_signal(signal))
     write_state(STATE,signal.id,signal.candle_close_utc)
     print("Alert delivered")
     return 0
