@@ -1,4 +1,4 @@
-"""Telegram-only alert delivery. Do not log bot secrets."""
+"""Deliver BTC alerts via Discord webhook. Never log secret webhook URLs."""
 import json
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
@@ -19,20 +19,22 @@ def format_signal(signal):
         "Signal only, NO ORDER. Check the live price and costs; this is not a guaranteed entry."
     )
 
-def send_telegram(token, chat_id, message):
-    if not token or not chat_id: raise RuntimeError("Missing Telegram secrets")
-    url = "https://api.telegram.org/bot" + token + "/sendMessage"
-    data = json.dumps({"chat_id":chat_id,"text":message,"disable_web_page_preview":True}).encode()
-    request = Request(url, data=data, headers={"Content-Type":"application/json"}, method="POST")
+def send_discord(webhook_url, message):
+    """Post a plain message to a Discord channel using a secret webhook."""
+    from urllib.parse import urlparse
+    parts = urlparse(webhook_url)
+    if parts.scheme != "https" or parts.hostname not in ("discord.com", "discordapp.com") or not parts.path.startswith("/api/webhooks/"):
+        raise RuntimeError("Invalid Discord webhook URL")
+    data = json.dumps({"content": message, "allowed_mentions": {"parse": []}}).encode("utf-8")
+    request = Request(webhook_url, data=data, headers={"Content-Type": "application/json"}, method="POST")
     try:
         with urlopen(request, timeout=15) as response:
-            result = json.load(response)
+            if response.status not in (200, 204):
+                raise RuntimeError(f"Discord HTTP {response.status}")
     except HTTPError as e:
-        raise RuntimeError(f"Telegram HTTP {e.code}; verify bot token/chat ID") from None
-    except (URLError,TimeoutError,json.JSONDecodeError):
-        raise RuntimeError("Telegram network or response error") from None
-    if not isinstance(result,dict) or result.get("ok") is not True:
-        raise RuntimeError("Telegram rejected message")
+        raise RuntimeError(f"Discord HTTP {e.code}; check your webhook secret") from None
+    except (URLError, TimeoutError):
+        raise RuntimeError("Discord connection failed") from None
 
 def test_message():
-    return "BingX alert TEST " + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC") + "\nTelegram connected. No order created."
+    return "BingX alert TEST " + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC") + "\nDiscord connected. No order created."
