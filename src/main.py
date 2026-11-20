@@ -8,7 +8,7 @@ from .market import INTERVAL_MS, HOUR_MS, fetch_klines, parse_klines
 from .strategy import find_signal
 from .filters import hourly_trend
 from .backtest import backtest
-from .notifier import send_discord, format_signal, test_message
+from .notifier import send_discord, format_signal, format_status, test_message
 
 STATE = Path(".state/last_signal.json")
 
@@ -25,15 +25,15 @@ def candles_for(interval, limit, now):
 
 def main(argv=None):
     parser=argparse.ArgumentParser()
-    parser.add_argument("--mode",choices=("test","dry-run","scan","backtest"),default="scan")
+    parser.add_argument("--mode",choices=("test","dry-run","scan","backtest","status"),default="scan")
     args=parser.parse_args(argv)
     webhook=os.environ.get("DISCORD_WEBHOOK_URL","")
     if args.mode == "test":
         send_discord(webhook,test_message())
         print("Discord test delivered")
         return 0
-    if args.mode == "scan" and not webhook:
-        print("Discord webhook not configured; skipping scan.")
+    if args.mode in ("scan","status") and not webhook:
+        print("Discord webhook not configured; skipping alert/status.")
         return 0
     now=int(time.time()*1000)
     bars=candles_for("5m",1000 if args.mode == "backtest" else 300,now)
@@ -48,7 +48,15 @@ def main(argv=None):
         print(json.dumps({k:v for k,v in report.items() if k!="trade_details"},indent=2))
         print(f"Full report saved: {path}")
         return 0
+    if not bars:
+        raise RuntimeError("No closed 5m candles; cannot provide status")
     signal=find_signal(bars,now_ms=now)
+    if args.mode == "status":
+        trend=hourly_trend(hours,bars[-1].time+INTERVAL_MS)
+        confirmed=bool(signal and trend==signal.side)
+        send_discord(webhook,format_status(bars[-1],trend,confirmed,now))
+        print("Discord market status delivered (not a trade signal)")
+        return 0
     if not signal:
         print("No fresh 5m breakout/retest setup")
         return 0

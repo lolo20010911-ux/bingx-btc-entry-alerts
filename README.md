@@ -38,3 +38,15 @@ A 5m LONG csak akkor jut el Discordra, ha az **utolsó teljesen lezárt 1 órás
 **Visszateszt korlátai:** 1000 utolsó 5m gyertya ≈ 3,5 nap, nem reprezentatív teljesítményértékelés. A belépő a jelzés UTÁNI gyertya nyitóárán történik szimulálva; 0,05% taker díj/oldal, 0,02% becsült csúszás/fill, egyszerre legfeljebb egy pozíció, max 48 gyertya tartás. Ha egy gyertyán stop és célár egyaránt érintett, a stop számít. A funding, likvidáció és valós order book nem szerepel. A kimutatás R-alapú, **nem** számla- vagy tőkeáttételes P&L. A múltbeli eredmény nem garantál jövőbeli nyereséget.
 
 A bot soha nem nyit pozíciót. A GitHub Actions 5 perces ütemezése nem garantáltan pontos; futások késhetnek/kimaradhatnak.
+
+
+## Állapotjelentés Discordra (V2.1)
+
+Ha nem jön kereskedési jelzés, az **nem feltétlenül hiba**. A `dry-run` és `backtest` mód szándékosan nem küld üzenetet Discordra. Most hozzáadtuk a `status` módot:
+
+- GitHub → Actions → `BingX 5m entry monitor` → `Run workflow` → **status**.
+- Ez **mindig küld egy ellenőrző üzenetet** a Discordra, ha működik a piaci adatlekérés és a webhook; megmutatja az utolsó lezárt 5m gyertya záróárát, az 1h trend irányát és hogy van-e megfelelő 5m jelzés.
+- Egy **napi állapotjelentést** is megpróbálunk küldeni 08:17 UTC-kor. Az 5 perces ütemezett futások ezzel párhuzamosan továbbra is csak valós stratégiai jelzésre küldenek üzenetet. A GitHub Actions időzítés késhet vagy kimaradhat, nincs valós idejű SLA.
+- A `status` nem valódi belépő, nem nyit pozíciót. Az itt látott 5m záróár nem a pillanatnyi kötési ár.
+
+**Első backtest megfigyelés, 2026-11-17 – 2026-11-20:** 999 lezárt 5m gyertya, 8 mintabeli setup, 3 trend miatt szűrt, 5 szimulált ügylet, 1 pozitív, 20% találati arány, nettó -3,842R. Ez rövid, kis mintás és negatív eredmény: a stratégiát még nem szabad bizonyítottan nyereségesnek tekinteni, éles futures belépőket saját ellenőrzés nélkül nem ajánlott követni.

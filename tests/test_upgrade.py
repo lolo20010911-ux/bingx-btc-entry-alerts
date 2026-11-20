@@ -5,6 +5,7 @@ from src.market import Candle,INTERVAL_MS,HOUR_MS,parse_klines
 from src.filters import hourly_trend
 from src.backtest import backtest
 from src.strategy import Signal
+from src.notifier import format_status
 
 BASE=1700000000000//HOUR_MS*HOUR_MS
 
@@ -35,6 +36,17 @@ class UpgradeTests(unittest.TestCase):
             return dict(time=BASE+i*HOUR_MS,open="100",high="101",low="99",close="100",volume="1")
         bars=parse_klines({"code":0,"data":[raw(0),raw(1),raw(2)]},BASE+2*HOUR_MS+20000,interval_ms=HOUR_MS)
         self.assertEqual(len(bars),2)
+    def test_status_is_not_trade_alert(self):
+        last=fivebars()[-1]
+        status=format_status(last,"LONG",False,last.time+INTERVAL_MS+30000)
+        self.assertIn("BOT STATUS",status)
+        self.assertIn("No confirmed entry",status)
+        self.assertIn("No order created",status)
+        self.assertIn("LONG",status)
+    def test_status_warns_stale_data(self):
+        last=fivebars()[-1]
+        status=format_status(last,None,False,last.time+INTERVAL_MS+900000)
+        self.assertIn("data may be stale",status)
     def test_stop_first_and_fees(self):
         bars=fivebars()
         s=bars[250]
