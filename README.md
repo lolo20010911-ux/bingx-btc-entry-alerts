@@ -77,3 +77,7 @@ A webhook Discord Secrets-ben marad. A kód továbbra sem nyit pozíciót és a 
 ## V4 – Discordban állítható státuszgyakoriság
 
 A Discord `/btc-ertesites` menü és az önálló Cloudflare Worker kódja elkészült. Választható: kikapcsolva, 5, 15, 30, 60 vagy 240 perc. A **külön Discord alkalmazás és Cloudflare Worker telepítése még szükséges**; a GitHub-repository önmagában nem hozza létre a Discord-parancsot. A megvalósítás [magyar telepítési útmutatója](discord-control/SETUP_HU.md). A régi fix napi státuszát kikapcsoltuk, hogy a menü „Kikapcsolva” opciója valóban leállítsa az automatikus státuszt. A LONG/SHORT figyelő külön működik.
+
+## Egyszeri e-mail próba (2026-11-20)
+
+A Discordos automatikus szkennelést leállítottuk. Egy külön 10 percenkénti, legfeljebb egy órás e-mailes BTC státusz workflow hozzáadva, amely kizárólag **2026-11-20 21:18–22:18 UTC** között küldhet. Nem aktív hitelesített Gmail küldés, amíg a `GMAIL_USERNAME`, `GMAIL_APP_PASSWORD` és `EMAIL_TO` GitHub titkok nincsenek beállítva. [E-mail telepítési útmutató](EMAIL_TRIAL_HU.md).
