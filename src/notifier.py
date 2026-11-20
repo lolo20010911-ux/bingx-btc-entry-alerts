@@ -26,13 +26,18 @@ def send_discord(webhook_url, message):
     if parts.scheme != "https" or parts.hostname not in ("discord.com", "discordapp.com") or not parts.path.startswith("/api/webhooks/"):
         raise RuntimeError("Invalid Discord webhook URL")
     data = json.dumps({"content": message, "allowed_mentions": {"parse": []}}).encode("utf-8")
-    request = Request(webhook_url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    request = Request(webhook_url, data=data, headers={"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "DiscordBot (https://github.com/lolo20010911-ux/bingx-btc-entry-alerts, 1.0)"}, method="POST")
     try:
         with urlopen(request, timeout=15) as response:
             if response.status not in (200, 204):
                 raise RuntimeError(f"Discord HTTP {response.status}")
     except HTTPError as e:
-        raise RuntimeError(f"Discord HTTP {e.code}; check your webhook secret") from None
+        # Never print the webhook URL or raw response body: both can contain secrets.
+        if e.code == 403:
+            raise RuntimeError("Discord HTTP 403: access denied. Check webhook channel permissions or Discord network/Cloudflare restrictions.") from None
+        if e.code == 404:
+            raise RuntimeError("Discord HTTP 404: webhook no longer exists; create a new webhook secret.") from None
+        raise RuntimeError(f"Discord HTTP {e.code}: message not delivered.") from None
     except (URLError, TimeoutError):
         raise RuntimeError("Discord connection failed") from None
 
