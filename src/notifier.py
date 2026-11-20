@@ -29,12 +29,12 @@ def format_status(last_closed_5m, hourly_direction, qualified, now_ms):
     setup = "QUALIFIED CANDIDATE - check current chart before considering a trade" if qualified else "No confirmed entry on latest closed candle"
     warning = "CAUTION: 5m data may be stale" if age_minutes > 8 else "5m data is recent"
     return (
-        "BingX BTC/USDT BOT STATUS (not a trading alert)\\n"
-        f"Last completed 5m candle: {dt:%Y-%m-%d %H:%M} UTC\\n"
-        f"5m close: {last_closed_5m.close:,.2f} USDT\\n"
-        f"1h EMA20/50 direction: {trend}\\n"
-        f"Entry setup: {setup}\\n"
-        f"Data: {warning}; delay {max(0, age_minutes):.1f} min\\n"
+        "BingX BTC/USDT BOT STATUS (not a trading alert)\n"
+        f"Last completed 5m candle: {dt:%Y-%m-%d %H:%M} UTC\n"
+        f"5m close: {last_closed_5m.close:,.2f} USDT\n"
+        f"1h EMA20/50 direction: {trend}\n"
+        f"Entry setup: {setup}\n"
+        f"Data: {warning}; delay {max(0, age_minutes):.1f} min\n"
         "Read-only monitoring. No order created. Strategy not validated for live futures trading."
     )
 
