@@ -72,3 +72,8 @@ A `preview`, `scan`, `status` és `test` módok most már natív **Discord embed
 - **test:** egyszerű zöld kapcsolat-ellenőrző kártya.
 
 A webhook Discord Secrets-ben marad. A kód továbbra sem nyit pozíciót és a belépőstratégia feltételei nem változtak. Tesztelés: GitHub → Actions → BingX 5m entry monitor → Run workflow → `preview`. A régi üzenetek nem változnak, csak az újak kapnak új formátumot.
+
+
+## V4 – Discordban állítható státuszgyakoriság
+
+A Discord `/btc-ertesites` menü és az önálló Cloudflare Worker kódja elkészült. Választható: kikapcsolva, 5, 15, 30, 60 vagy 240 perc. A **külön Discord alkalmazás és Cloudflare Worker telepítése még szükséges**; a GitHub-repository önmagában nem hozza létre a Discord-parancsot. A megvalósítás [magyar telepítési útmutatója](discord-control/SETUP_HU.md). A régi fix napi státuszát kikapcsoltuk, hogy a menü „Kikapcsolva” opciója valóban leállítsa az automatikus státuszt. A LONG/SHORT figyelő külön működik.

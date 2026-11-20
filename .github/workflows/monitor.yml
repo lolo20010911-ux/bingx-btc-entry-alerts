@@ -2,7 +2,6 @@ name: BingX 5m entry monitor
 on:
   schedule:
     - cron: '1-59/5 * * * *'
-    - cron: '17 8 * * *'  # Daily UTC heartbeat, dispatched as status
   workflow_dispatch:
     inputs:
       mode:
@@ -38,7 +37,7 @@ jobs:
       - name: Run monitor
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          MODE: ${{ (github.event.schedule == '17 8 * * *' && 'status') || github.event.inputs.mode || 'scan' }}
+          MODE: ${{ github.event.inputs.mode || 'scan' }}
         run: python -m src.main --mode "$MODE"
       - name: Upload backtest report
         if: ${{ success() && github.event.inputs.mode == 'backtest' }}

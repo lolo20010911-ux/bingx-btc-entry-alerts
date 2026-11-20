@@ -18,3 +18,14 @@ jobs:
           python-version: '3.12'
       - name: Run offline tests
         run: python -m unittest discover -s tests -v
+
+  discord-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test Discord UI and periodic status
+        run: node --test discord-control/test/*.test.mjs
