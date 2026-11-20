@@ -8,7 +8,7 @@ from .market import INTERVAL_MS, HOUR_MS, fetch_klines, parse_klines
 from .strategy import find_signal
 from .filters import hourly_trend
 from .backtest import backtest
-from .notifier import send_discord, format_signal, format_status, test_message, preview_message
+from .notifier import send_discord, format_signal, build_signal_embed, build_status_embed, build_test_embed, preview_embed
 
 STATE = Path(".state/last_signal.json")
 
@@ -29,11 +29,11 @@ def main(argv=None):
     args=parser.parse_args(argv)
     webhook=os.environ.get("DISCORD_WEBHOOK_URL","")
     if args.mode == "test":
-        send_discord(webhook,test_message())
+        send_discord(webhook,embeds=[build_test_embed()])
         print("Discord test delivered")
         return 0
     if args.mode == "preview":
-        send_discord(webhook,preview_message())
+        send_discord(webhook,content='🧪 **DEMO ONLY — KITALÁLT ÁRAK — NE KERESKEDJ EZ ALAPJÁN!**',embeds=[preview_embed()])
         print("Fictional SHORT alert preview delivered to Discord; no live market data, no trade")
         return 0
     if args.mode in ("scan","status") and not webhook:
@@ -58,7 +58,7 @@ def main(argv=None):
     if args.mode == "status":
         trend=hourly_trend(hours,bars[-1].time+INTERVAL_MS)
         confirmed=bool(signal and trend==signal.side)
-        send_discord(webhook,format_status(bars[-1],trend,confirmed,now))
+        send_discord(webhook,embeds=[build_status_embed(bars[-1],trend,confirmed,now)])
         print("Discord market status delivered (not a trade signal)")
         return 0
     if not signal:
@@ -74,7 +74,7 @@ def main(argv=None):
     if args.mode=="dry-run":
         print("DRY RUN (not sent):\n"+format_signal(signal))
         return 0
-    send_discord(webhook,format_signal(signal)+"\nConfirmed 1h EMA20/50 trend: "+trend)
+    send_discord(webhook,embeds=[build_signal_embed(signal,trend=trend)])
     write_state(STATE,signal.id,signal.candle_close_utc)
     print("Alert delivered")
     return 0

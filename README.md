@@ -60,3 +60,15 @@ Ha meg szeretnéd nézni, milyen lesz egy valódi SHORT belépőjelzés:
 3. A Discord `#btc-alerts` csatornában megjelenik egy **egyértelműen DEMO** SHORT üzenet, például belépő 60 000 USDT, stop 60 120, célár 59 760. Az árak **kitaláltak**, a 2025-01-01 dátum **minta**, nincs mögöttük valós piaci setup.
 
 A **preview** nem kér piaci adatot, nem módosítja az utolsó jelzés állapotát, és nem nyit pozíciót. Csak a Discord formátumot mutatja be. A **scan** mód külön működik, és továbbra is kizárólag teljesült indikátorfeltételek esetén jelez.
+
+## V3 – Discord embed megjelenés (2026-11-20)
+
+A `preview`, `scan`, `status` és `test` módok most már natív **Discord embed kártyákat** küldenek:
+
+- **LONG:** zöld oldalsáv, belépő / stop / célár, 1h trend és indikátorok.
+- **SHORT:** piros oldalsáv, ugyanilyen rendezett mezők.
+- **preview:** kék, nagyméretű **DEMO ONLY / FICTIONAL** figyelmeztetés. A példában szereplő árak kitaláltak; ne köss rájuk.
+- **status:** kék (friss adatok) vagy sárga (8 percnél régebbi 5m zárás), külön jelölve hogy nem kereskedési jelzés.
+- **test:** egyszerű zöld kapcsolat-ellenőrző kártya.
+
+A webhook Discord Secrets-ben marad. A kód továbbra sem nyit pozíciót és a belépőstratégia feltételei nem változtak. Tesztelés: GitHub → Actions → BingX 5m entry monitor → Run workflow → `preview`. A régi üzenetek nem változnak, csak az újak kapnak új formátumot.
