@@ -1,7 +1,7 @@
 import unittest
 from src.market import Candle, INTERVAL_MS, parse_klines
 from src.strategy import ema, rsi, atr, find_signal
-from src.notifier import test_message
+from src.notifier import test_message, send_discord
 
 START=1700000100000
 
@@ -35,8 +35,11 @@ class MonitorTests(unittest.TestCase):
         bars=[bar(i) for i in range(100)]
         del bars[-20]
         self.assertIsNone(find_signal(bars,bars[-1].time+INTERVAL_MS+20000))
-    def test_telegram_test(self):
+    def test_discord_test(self):
         self.assertIn("TEST",test_message())
+    def test_discord_rejects_invalid_webhook(self):
+        with self.assertRaises(RuntimeError):
+            send_discord("http://localhost:1234/foo", "message")
 
 if __name__=="__main__":
     unittest.main()
